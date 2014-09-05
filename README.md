@@ -5,7 +5,7 @@ This repository contains Cellprofiler modules for interfacing with the CAM Serve
 
 DOCUMENTATION:
 
-refer to the Wiki page here on github for the full documentation:
+refer to the Wiki page for the full documentation:
 
 https://github.com/VolkerH/MatrixScreenerCellprofiler/wiki
 
