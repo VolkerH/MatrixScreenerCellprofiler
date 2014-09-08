@@ -74,7 +74,10 @@ import os
 import string
 import pdb
 import numpy as np
-import layout
+try:
+    import layout
+except:
+    nolayoutmodule=True
 import re
 
 iplocal = "127.0.0.1"
@@ -612,8 +615,11 @@ class CAMcommunicator:
         # wait for and parse response
         resp=self.readandparseCAM()[0]
         if resp['dev']=='stage':
-            sp = layout.StagePosition()
-            sp[:] = (float(resp['xpos']),float(resp['ypos']),float(resp['zpos']))
+            if nolayoutmodule:
+                sp = (float(resp['xpos']),float(resp['ypos']),float(resp['zpos']))
+            else:
+                sp = layout.StagePosition()
+                sp[:] = (float(resp['xpos']),float(resp['ypos']),float(resp['zpos']))
             return sp
         else:
             return None
