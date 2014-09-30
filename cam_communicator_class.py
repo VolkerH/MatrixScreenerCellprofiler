@@ -6,7 +6,6 @@
 #  be used interactively in ipython.
 #
 #
-#
 ######################################################################  
 #
 #  NOTE: this class is required by the "LCC Module" suite for inter- 
@@ -724,11 +723,13 @@ class CAMcommunicator:
     def addFCSPoint(self, dxpos, dypos, dzpos=0):
         """adds an FCS measurement point at coordinates dxpos, dypos, dzpos to the list"""
         prefix = "/cli:python /app:fcs /cmd:add"
-        dx = "/dxpos:" + `int(dxpos)` 
-        dy = "/dypos:" + `int(dypos)`
-        dz = "/dzpos:" + `int(dzpos)`
+        dx = "/xpos:" + `int(dxpos)` 
+        dy = "/ypos:" + `int(dypos)`
+        dz = "/zpos:" + `int(dzpos)`
         
         cmd = " ".join((prefix,dx,dy,dz))
+        #print "FCS command string"
+        #print cmd
         self.sendCMDstring(cmd)
 
     def removeFCSPoints(self):
