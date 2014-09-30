@@ -410,6 +410,11 @@ class LCCwaitForImage(cpm.CPModule):
             return [self.output_image_name.value]
         return []
 
+    def is_load_module(self):
+        # this is necessary for checking the pipeline, otherwise LoadSingleImage won't work
+        # in the same pipeline
+        return True
+
     def post_run(self, workspace):
         #
         # No post-run needed
