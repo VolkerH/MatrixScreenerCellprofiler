@@ -204,9 +204,9 @@ class LCCimageObject(cpm.CPModule):
         else:
             return self.base_settings+self.advanced_settings
     
-    def prepare_run(self):
+    def prepare_run(self, pipeline, image_set_list, frame):
         self.nr_objs_in_well = {}
-
+        return True
     # Main
     def run(self, workspace):
         global CAMC
@@ -311,9 +311,9 @@ class LCCimageObject(cpm.CPModule):
                 # object name and well coordinates. 
                 time_well_index =   ",".join((TimePoint, U, V, self.input_object_name.value))
                 if time_well_index in self.nr_objs_in_well.keys():
-                     nr_objs_in_well[time_well_index] +=1
+                    self.nr_objs_in_well[time_well_index] +=1
                 else: 
-                    nr_objs_in_well[time_well_index] = 1
+                    self.nr_objs_in_well[time_well_index] = 1
                 print time_well_index, " count is ", self.nr_objs_in_well[time_well_index]
 
                 if self.maxNrObjsPerWell.value==-1 or self.nr_objs_in_well[time_well_index] <= self.maxNrObjsPerWell.value:
