@@ -15,7 +15,7 @@
 #
 #  AUTHOR: Volker Hilsenstein, EMBL, 
 #          volker.hilsenstein at embl.de
-#  Latest changes: 1. September 2014
+#  Latest changes: 13. November 2014
 #
 #
 #  LICENSE:
@@ -75,6 +75,7 @@ import pdb
 import numpy as np
 try:
     import layout
+    nolayoutmodule=False
 except:
     nolayoutmodule=True
 import re
@@ -266,7 +267,8 @@ class CAMcommunicator:
                     for m in msgs:
                         if 'relpath' in m.keys():
                             #print m['relpath']
-                            fname = self.basepath + os.sep + m['relpath'].replace("\\",os.sep)
+                            #fname = self.basepath + os.sep + m['relpath'].replace("\\",os.sep)
+                            fname = self.basepath + m['relpath'].replace("\\",os.sep)
                             if ignoreduplicates is False or fname != self.previous_file:
                                 self.previous_file = fname # workaround as some files are reported twice
                                 print "New file " + fname
@@ -720,12 +722,16 @@ class CAMcommunicator:
     #  currently zpos is always zero
     ###############################################
 
-    def addFCSPoint(self, dxpos, dypos, dzpos=0):
+    def addFCSPoint(self, dxpos, dypos, dzpos=None):
         """adds an FCS measurement point at coordinates dxpos, dypos, dzpos to the list"""
         prefix = "/cli:python /app:fcs /cmd:add"
         dx = "/xpos:" + `int(dxpos)` 
         dy = "/ypos:" + `int(dypos)`
-        dz = "/zpos:" + `int(dzpos)`
+        if dzpos is None:
+            dz = "/zpos:0"
+        else:
+            dz = "/zpos:"+dzpos
+    
         
         cmd = " ".join((prefix,dx,dy,dz))
         #print "FCS command string"
