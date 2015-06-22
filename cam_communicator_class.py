@@ -343,18 +343,21 @@ class CAMcommunicator:
     def enableScanField(self, allfields=False, wellx=1, welly=1, fieldx=1, fieldy=1, value=True, slide=1):
         '''Enables the scanfield at the specified position or all scanfields if allfields is True'''
         c = "/cli:python /app:matrix "
-
+        print ["disabling","enabling"][value], " fields"
         if allfields is False:
             c += "/cmd:enable /slide:" + str(slide) + " /wellx:"+str(wellx) + " /welly:" + str(welly)
             c += " /fieldx:"+str(fieldx) + " /fieldy:" + str(fieldy)
         else:
+            print "allfields"
             c +=  "/cmd:enableall"
 
         c += " /value:" + ("false","true")[value]
         self.sendCMDstring(c)
+        time.sleep(0.1)
 
     def disableScanField(self, allfields=False, wellx=1, welly=1, fieldx=1, fieldy=1):
         '''disable is enable with value False ... so this is just a wrapper'''
+
         self.enableScanField(allfields, wellx, welly, fieldx, fieldy, value=False)
         
     def selectScanField(self, allfields=False, wellx=1, welly=1, fieldx=1, fieldy=1):
@@ -363,7 +366,9 @@ class CAMcommunicator:
       
         if allfields is False:
             c = "/cli:python /app:matrix /sys:1 /cmd:selectfield /wellx:"+str(wellx) + "/welly:"+str(welly) + " /fieldx:"+str(fieldx) + " /fieldy:" + str(fieldy)
+            print "selecting scanfield ", wellx, " ", welly, " ", fieldx, " ", fieldy
         else:
+            print "selecting all scanfields"
             c =  "/cli:python /app:matrix /cmd:selectallfields"
         self.sendCMDstring(c)
         time.sleep(0.5)
@@ -371,12 +376,13 @@ class CAMcommunicator:
     def assignJob(self, jobname):
         """assign a Job to the the currently selected positions"""
         c = "/cli:python /app:matrix /sys:1 /cmd:assignjob /job:"+jobname.lower()  # convert jobname to lowercase as workaround
-        
+        print "Assigning ", jobname
         self.sendCMDstring(c)
-        time.sleep(1)
+        time.sleep(0.5)
 
     def assignJobToScanFieldDisableAllOthers(self, jobname, wellx=1, welly=1, fieldx=1, fieldy=1):
         """Convenience function for assigning a job to a scanfield, and disabling all other scanfields"""
+
         self.selectScanField(False, wellx, welly, fieldx, fieldy)
         self.assignJob(jobname)
         self.disableScanField(allfields=True)
@@ -384,18 +390,26 @@ class CAMcommunicator:
 
     def assignJobToScanFields(self, jobname, fields,  wellx=1,  welly=1):
         """Convenience function for assigning a job to a scanfield, and disabling all other scanfields"""
-        tmpfields = fields[:] # make sure we copy the list, otherwise we will modify the origingal list
-        tmpfields.append(fields[0]) # this is to work around a bug in which the first field was not properly assigned
-        self.enableScanField(allfields=True)
-        time.sleep(1)
-        for fieldx, fieldy in tmpfields:
+        time.sleep(0.2)
+        first=True
+        for fieldx, fieldy in fields:
             self.selectScanField(False, wellx, welly, fieldx, fieldy)
-            time.sleep(2)
+            time.sleep(0.05)
             self.assignJob(jobname)
-            time.sleep(2)
-        self.disableScanField(allfields=True)
-        for fieldx, fieldy in tmpfields:
-            self.enableScanField(False, wellx, welly, fieldx, fieldy)
+            if first:
+                # need an extra long wait after assigning the first job.
+                # this is because Matrix Screener somehow takes that long to switch
+                # between jobs and as we don't know which job was previously selected we want
+                # to be on the save side
+                time.sleep(5)
+                first=False
+            else:
+                time.sleep(0.05)
+        time.sleep(0.2)
+        #self.disableScanField(allfields=True)
+        #for fieldx, fieldy in tmpfields:
+         #   self.enableScanField(False, wellx, welly, fieldx, fieldy)
+
 
     #############################################################################
     #  Drift compensation
@@ -416,8 +430,7 @@ class CAMcommunicator:
     def disableDriftCompensation(self, allfields=False, wellx=1, welly=1, fieldx=1, fieldy=1, slide=1):
         '''Diables the scanfield at the specified position or all scanfields if allfields is True'''
         self.enableDriftCompensation(allfields, wellx, welly, fieldx, fieldy, value=False, slide=slide)
-
-    #############################################################################
+    ####################################################
     #  Starting,stopping, dealing with CAMlist
     #############################################################################
 
