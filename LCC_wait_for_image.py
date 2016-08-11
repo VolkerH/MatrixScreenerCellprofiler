@@ -168,22 +168,38 @@ class LCCwaitForImage(cpm.CPModule):
         self.channel3 = cps.Choice("Channel number", channels, doc = doc_channel)
         self.output_image_name_ch3 = cps.ImageNameProvider("Output image name (additional channel)","OutputImageCh3", doc = doc_outputimage)
 
-        
+        self.ch4_active = cps.Binary("Read additional channel:", False, doc=doc_addchannel)
+        self.channel4 = cps.Choice("Channel number", channels, doc = doc_channel)
+        self.output_image_name_ch4 = cps.ImageNameProvider("Output image name (additional channel)","OutputImageCh4", doc = doc_outputimage)
+
+        self.ch5_active = cps.Binary("Read additional channel:", False, doc=doc_addchannel)
+        self.channel5 = cps.Choice("Channel number", channels, doc = doc_channel)
+        self.output_image_name_ch5 = cps.ImageNameProvider("Output image name (additional channel)","OutputImageCh5", doc = doc_outputimage)
+
+
 
     def settings(self):
         self.base_settings = [self.job_of_interest, self.flush_input,self.channel,  self.output_image_name, self.stackOption, self.ch2_active]
         self.ch2_settings = [self.channel2, self.output_image_name_ch2, self.ch3_active]
-        self.ch3_settings = [self.channel3, self.output_image_name_ch3]
+        self.ch3_settings = [self.channel3, self.output_image_name_ch3, self.ch4_active]
+        self.ch4_settings = [self.channel4, self.output_image_name_ch4, self.ch5_active]
+        self.ch5_settings = [self.channel5, self.output_image_name_ch5]
         
         #return [self.zeissaction_choice, self.microscope_choice,self.channel, self.output_image_name]
-        return self.base_settings + self.ch2_settings + self.ch3_settings
+        return self.base_settings + self.ch2_settings + self.ch3_settings + self.ch4_settings + self.ch5_settings
 
     def visible_settings(self):
         # TODO boilerplate code very similar to settings(). How to avoid ?
         self.base_settings = [self.job_of_interest, self.flush_input, self.nr_of_images, self.channel, self.output_image_name, self.stackOption, self.ch2_active]
         self.ch2_settings = [self.channel2, self.output_image_name_ch2, self.ch3_active]
-        self.ch3_settings = [self.channel3, self.output_image_name_ch3]
-        
+        self.ch3_settings = [self.channel3, self.output_image_name_ch3, self.ch4_active]
+        self.ch4_settings = [self.channel4, self.output_image_name_ch4, self.ch5_active]
+        self.ch5_settings = [self.channel5, self.output_image_name_ch5]
+
+        if self.ch5_active.value:
+            return self.base_settings + self.ch2_settings + self.ch3_settings + self.ch4_settings + self.ch5_settings
+        if self.ch4_active.value:
+            return self.base_settings + self.ch2_settings + self.ch3_settings + self.ch4_settings
         if self.ch3_active.value:
             return self.base_settings + self.ch2_settings + self.ch3_settings
         if self.ch2_active.value:
@@ -351,6 +367,16 @@ class LCCwaitForImage(cpm.CPModule):
             print "Reading " + self.filech3
             pixel_data_ch3=read_stack(self.filech3)
 
+        if self.ch4_active.value:
+            self.filech4 = base+"--C0"+str(int(self.channel4.value)-1)+md['suffix']+".ome.tif"
+            print "Reading " + self.filech4
+            pixel_data_ch4=read_stack(self.filech4)
+
+        if self.ch5_active.value:
+            self.filech5 = base+"--C0"+str(int(self.channel5.value)-1)+md['suffix']+".ome.tif"
+            print "Reading " + self.filech5
+            pixel_data_ch5=read_stack(self.filech5)
+
 
 
         # create the cellprofiler image objects from the pixel data and add the image objects to the set of images
@@ -378,6 +404,22 @@ class LCCwaitForImage(cpm.CPModule):
             workspace.measurements.add_measurement("Image","_".join((C_FILE_NAME,self.output_image_name_ch3.value)), tmpfile, can_overwrite=True)
             workspace.measurements.add_measurement("Image","_".join((C_PATH_NAME,self.output_image_name_ch3.value)), tmppath, can_overwrite=True)
             print "added ", self.output_image_name_ch3.value, " to image_set."
+
+        if self.ch4_active.value:
+            tmppath, tmpfile= os.path.split(self.filech4)
+            output_image_ch4 = cpi.Image(pixel_data_ch4, path_name=tmppath,file_name = tmpfile)
+            image_set.add(self.output_image_name_ch4.value, output_image_ch4)
+            workspace.measurements.add_measurement("Image","_".join((C_FILE_NAME,self.output_image_name_ch4.value)), tmpfile, can_overwrite=True)
+            workspace.measurements.add_measurement("Image","_".join((C_PATH_NAME,self.output_image_name_ch4.value)), tmppath, can_overwrite=True)
+            print "added ", self.output_image_name_ch4.value, " to image_set."
+
+        if self.ch5_active.value:
+            tmppath, tmpfile= os.path.split(self.filech5)
+            output_image_ch5 = cpi.Image(pixel_data_ch5, path_name=tmppath,file_name = tmpfile)
+            image_set.add(self.output_image_name_ch5.value, output_image_ch5)
+            workspace.measurements.add_measurement("Image","_".join((C_FILE_NAME,self.output_image_name_ch5.value)), tmpfile, can_overwrite=True)
+            workspace.measurements.add_measurement("Image","_".join((C_PATH_NAME,self.output_image_name_ch5.value)), tmppath, can_overwrite=True)
+            print "added ", self.output_image_name_ch5.value, " to image_set."
 
         width = pixel_data.shape[0]
         height = pixel_data.shape[1]
@@ -411,7 +453,8 @@ class LCCwaitForImage(cpm.CPModule):
         return []
 
     def is_load_module(self):
-        # this is necessary for checking the pipeline, otherwise LoadSingleImage won't work
+        # this is necessary for checking the pipeline, 
+        # otherwise LoadSingleImage won't work
         # in the same pipeline
         return True
 

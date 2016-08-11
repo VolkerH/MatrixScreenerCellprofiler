@@ -80,28 +80,50 @@ except:
     nolayoutmodule=True
 import re
 
+try:
+    import proprietary
+    noproprietary=False
+except:
+    noproprietary=True
+import re
+
+
+
 iplocal = "127.0.0.1"
 ipSP5A = "10.11.112.16" # these are convenient shorthands for internal use
 ipSP5B = "10.11.112.18" 
 
 
 class CAMcommunicator:
-    # Settings for TCP/IP communication
-    IP_address = "127.0.0.1"
-    port = 8895
-    timeout = 120
-    delay=0.3
-    buffersize = 4096
-    leicasocket = None
-    verbose=True
-    basepath = "" # Set this to the data exporter base path
-    connected=False
-    cmdlist = [] # CAM command list
-    previous_file = ""
-    previous_cmd = ""
-    stage_settle_time = 6.5
+    def __init__(self):
+        # Settings for TCP/IP communication
+        # changed all of these from
+        # class to object variables
+        # which seems to make more sense
+        # in case one has several instances
+        # (which is unlikely in practice, though)
+        self.IP_address = "127.0.0.1"
+        self.sysID='1'
+        self.port = 8895
+        self.timeout = 120
+        self.delay=0.8 # changed from default
+        self.buffersize = 4096
+        self.leicasocket = None
+        self.verbose=True
+        self.basepath = "" # Set this to the data exporter base path
+        self.connected=False
+        self.cmdlist = [] # CAM command list
+        self.previous_file = ""
+        self.previous_cmd = ""
+        self.stage_settle_time = 6.5
+        sequence_counter=0
 
-    sequence_counter=0 
+    def setSysID(self, newsysID):
+        self.sysID = str(newsysID)
+
+    def getSysID(self):
+        return self.sysID
+
     
     ###############################################
     #  network connection settings and functions
@@ -113,6 +135,8 @@ class CAMcommunicator:
     def getIP(self):
         return self.IP_address
         
+
+
 
     def printSettings(self):
         print "CAMCommunicator settings"
@@ -230,7 +254,7 @@ class CAMcommunicator:
         metadata is a dict of metadata fields extracted from the filename (TODO- Test with CAM images)
         """
 
-        re_pattern = "(?P<Prefix>.*)(?P<Loop>--L[0-9]*)(?P<Slide>--S[0-9]*)(?P<U>--U[0-9]*)(?P<V>--V[0-9]*)(?P<Job>--J[0-9]*)(?P<E>--E.*)(?P<O>--O.*)(?P<X>--X[0-9]*)(?P<Y>--Y[0-9]*)(?P<T>--T[0-9]*)(?P<Zpos>--Z[0-9]*)(?P<Channel>--C[0-9]*)(?P<Suffix>.*)(\.ome.tif$)"
+        re_pattern = "(?P<Prefix>.*)(?P<Loop>--[Ll][0-9]*)(?P<Slide>--S[0-9]*)(?P<U>--[Uu][0-9]*)(?P<V>--[Vv][0-9]*)(?P<Job>--J[0-9]*)(?P<E>--[Ee].*)(?P<O>--O.*)(?P<X>--[Xx][0-9]*)(?P<Y>--[Yy][0-9]*)(?P<T>--[Tt][0-9]*)(?P<Zpos>--[Zz][0-9]*)(?P<Channel>--[Cc][0-9]*)(?P<Suffix>.*)(\.ome.tif$)"
 
         try:
             starttime = time.time()
@@ -261,7 +285,7 @@ class CAMcommunicator:
                     #
                     # For our purposes this is good enough but be aware of the limitation
 
-                    # TODO sometimes msgs appear to be NOone
+                    # TODO sometimes msgs appear to be None
 
                     msgs.reverse()
                     for m in msgs:
@@ -341,7 +365,7 @@ class CAMcommunicator:
     #############################################################################
 
     def enableScanField(self, allfields=False, wellx=1, welly=1, fieldx=1, fieldy=1, value=True, slide=1):
-        '''Enables the scanfield at the specified position or all scanfields if allfields is True'''
+        '''Enables either the scanfield at the specified position or all scanfields if allfields is True'''
         c = "/cli:python /app:matrix "
         print ["disabling","enabling"][value], " fields"
         if allfields is False:
@@ -353,19 +377,33 @@ class CAMcommunicator:
 
         c += " /value:" + ("false","true")[value]
         self.sendCMDstring(c)
-        time.sleep(0.1)
+        time.sleep(0.2)
 
-    def disableScanField(self, allfields=False, wellx=1, welly=1, fieldx=1, fieldy=1):
-        '''disable is enable with value False ... so this is just a wrapper'''
+    def enableScanFields(self, fields, wellx=1, welly=1, value=True, slide=1):
+        '''Enables each scanfield provided in the list of tuples "fields" in well wellx, welly'''
+        print ["disabling","enabling"][value], " fields", fields
+        basec = "/cli:python /app:matrix "
+        basec += "/cmd:enable /slide:" + str(slide) + " /wellx:"+str(wellx) + " /welly:" + str(welly)
+        for fieldx, fieldy in fields:
+            c = basec + " /fieldx:"+str(fieldx) + " /fieldy:" + str(fieldy)
+            c += " /value:" + ("false","true")[value]
+            self.sendCMDstring(c)
+            time.sleep(0.2)
 
-        self.enableScanField(allfields, wellx, welly, fieldx, fieldy, value=False)
-        
+    def disableScanField(self, allfields=False, wellx=1, welly=1, fieldx=1, fieldy=1, slide=1):
+        '''disableScanField is just a convenience wrapper that calls enableScanField mit value=False'''
+        self.enableScanField(allfields, wellx, welly, fieldx, fieldy, value=False, slide=1)
+
+    def disableScanFields(self, fields, wellx=1, welly=1, slide=1):
+        '''disableScanFields is just a convenience wrapper that calls enableScanField mit'''
+        self.enableScanField( fields, wellx, welly, value=False, slide=1)
+
     def selectScanField(self, allfields=False, wellx=1, welly=1, fieldx=1, fieldy=1):
         """Select scan field in wellx, welly, fieldx, fieldy. If allfields==True, all scan fields are selected"""
         # TODO ... allow to pass lists with fields
       
         if allfields is False:
-            c = "/cli:python /app:matrix /sys:1 /cmd:selectfield /wellx:"+str(wellx) + "/welly:"+str(welly) + " /fieldx:"+str(fieldx) + " /fieldy:" + str(fieldy)
+            c = "/cli:python /app:matrix /sys:"+self.sysID+" /cmd:selectfield /wellx:"+str(wellx) + "/welly:"+str(welly) + " /fieldx:"+str(fieldx) + " /fieldy:" + str(fieldy)
             print "selecting scanfield ", wellx, " ", welly, " ", fieldx, " ", fieldy
         else:
             print "selecting all scanfields"
@@ -375,14 +413,13 @@ class CAMcommunicator:
 
     def assignJob(self, jobname):
         """assign a Job to the the currently selected positions"""
-        c = "/cli:python /app:matrix /sys:1 /cmd:assignjob /job:"+jobname.lower()  # convert jobname to lowercase as workaround
+        c = "/cli:python /app:matrix /sys:"+self.sysID+" /cmd:assignjob /job:"+jobname.lower()  # convert jobname to lowercase as workaround
         print "Assigning ", jobname
         self.sendCMDstring(c)
         time.sleep(0.5)
 
     def assignJobToScanFieldDisableAllOthers(self, jobname, wellx=1, welly=1, fieldx=1, fieldy=1):
         """Convenience function for assigning a job to a scanfield, and disabling all other scanfields"""
-
         self.selectScanField(False, wellx, welly, fieldx, fieldy)
         self.assignJob(jobname)
         self.disableScanField(allfields=True)
@@ -394,7 +431,7 @@ class CAMcommunicator:
         first=True
         for fieldx, fieldy in fields:
             self.selectScanField(False, wellx, welly, fieldx, fieldy)
-            time.sleep(0.05)
+            time.sleep(0.2)
             self.assignJob(jobname)
             if first:
                 # need an extra long wait after assigning the first job.
@@ -404,7 +441,7 @@ class CAMcommunicator:
                 time.sleep(5)
                 first=False
             else:
-                time.sleep(0.05)
+                time.sleep(2)
         time.sleep(0.2)
         #self.disableScanField(allfields=True)
         #for fieldx, fieldy in tmpfields:
@@ -585,7 +622,9 @@ class CAMcommunicator:
     def setStagePositionSafely(self, pos, high_stage_position=-0.00075):
         """ This function will first raise the stage, to make more space to clear the objective, then
         travel to commanded X,Y Position and then move the stage to the commanded Z position. """
-        
+        # TODO: disabled moving stage up and down. Test and revisit.
+        #
+
         if len(pos) == 2: # if no Z-position is given, we remember the current Z position
             finalZ= self.getCurrentStagePosition()[2]
         else:
@@ -593,20 +632,20 @@ class CAMcommunicator:
 
         # First, raise the stage to the maximum setting (NEED TO ACTIVATE Hi-Z OPTION IN LASAF CONFIGURATION !!!)
         # This will give us maximum clearance above the objective
-        self.setStageZPosition(high_stage_position)
+        #self.setStageZPosition(high_stage_position)
         # Now we move to the target X,Y position ...
         self.setStageXYPosition(pos[0:2])
         # ... and wait a while so we can be sure the stage has arrived
         time.sleep(self.stage_settle_time)
         # finally we lower the stage to the commanded Z position (or the Z position before the move, if no
         # Z position was specified)
-        if not np.isnan(finalZ) and finalZ is not None:
-            self.setStageZPosition(finalZ)
-        time.sleep(self.stage_settle_time)
+        #if not np.isnan(finalZ) and finalZ is not None:
+        #    self.setStageZPosition(finalZ)
+        #time.sleep(self.stage_settle_time)
         
 
     def setStageXYPosition(self,pos, relative=False):
-        c= "/cli:python /app:matrix /sys:1 /cmd:setposition /typ:" + ("absolute","relative")[relative] +" /dev:stage /unit:meter /xpos:" + "{:.12f}".format(pos[0]) + " /ypos:" + "{:.12f}".format(pos[1])
+        c= "/cli:python /app:matrix /sys:"+self.sysID+" /cmd:setposition /typ:" + ("absolute","relative")[relative] +" /dev:stage /unit:meter /xpos:" + "{:.12f}".format(pos[0]) + " /ypos:" + "{:.12f}".format(pos[1])
         self.sendCMDstring(c)
 
     def setStagePosition(self,pos, relative=False):
@@ -618,14 +657,14 @@ class CAMcommunicator:
         self.setStageXYPosition(pos[0:2],relative)
 
     def setStageZPosition(self,z, relative=False):
-        c= "/cli:python /app:matrix /sys:1 /cmd:setposition /typ:" + ("absolute","relative")[relative] + " /dev:zdrive /unit:meter /zpos:" + "{:.12f}".format(z)
+        c= "/cli:python /app:matrix /sys:"+self.sysID+" /cmd:setposition /typ:" + ("absolute","relative")[relative] + " /dev:zdrive /unit:meter /zpos:" + "{:.12f}".format(z)
         self.sendCMDstring(c)
         
     def getCurrentStagePosition(self):
         """Queries the CAM server for the current stage position and returns that position as a 3-tuple of float values"""
         
         # send query
-        self.sendCMDstring("/cli:python /app:matrix /sys:1 /cmd:getinfo /dev:stage")
+        self.sendCMDstring("/cli:python /app:matrix /sys:"+self.sysID+" /cmd:getinfo /dev:stage")
         # wait for and parse response
         resp=self.readandparseCAM()[0]
         if resp['dev']=='stage':
@@ -640,27 +679,27 @@ class CAMcommunicator:
 
     def saveCurrentStagePosition(self):
         """Saves the current stage position (X,Y) - use returnToStagePosition to revisit"""
-        c= "/cli:python /app:matrix /sys:1 /cmd:savecurrentposition /dev:stage"
+        c= "/cli:python /app:matrix /sys:"+self.sysID+" /cmd:savecurrentposition /dev:stage"
         self.sendCMDstring(c)
 
     def returnToStagePosition(self):
         """returns to saved stage position (X,Y) - use saveCurrentStagePosition to set """ 
-        c= "/cli:python /app:matrix /sys:1 /cmd:returntosavedposition /dev:stage"
+        c= "/cli:python /app:matrix /sys:"+self.sysID+" /cmd:returntosavedposition /dev:stage"
         self.sendCMDstring(c)
 
     def saveCurrentZPosition(self):
         """Saves the current zdrive position (Z) - use returnToZPosition to revisit"""
-        c= "/cli:python /app:matrix /sys:1 /cmd:savecurrentposition /dev:zdrive"
+        c= "/cli:python /app:matrix /sys:"+self.sysID+" /cmd:savecurrentposition /dev:zdrive"
         self.sendCMDstring(c)
 
     def returnToZPosition(self):
         """returns to saved Z position (Z) - use saveCurrentZPosition to set """ 
-        c= "/cli:python /app:matrix /sys:1 /cmd:returntosavedposition /dev:zdrive"
+        c= "/cli:python /app:matrix /sys:"+self.sysID+" /cmd:returntosavedposition /dev:zdrive"
         self.sendCMDstring(c)
         
     def moveStageToWell(self, u, v):
         """moves stage to well u,v """ 
-        c= "/cli:python /app:matrix /sys:1 /cmd:moveteowell "
+        c= "/cli:python /app:matrix /sys:"+self.sysID+" /cmd:moveteowell "
         c += " /upos:"+str(u)
         c += " /vpos:"+str(v)
         self.sendCMDstring(c)
@@ -673,7 +712,7 @@ class CAMcommunicator:
         """Set the laser power for a job. Laser is identified by wavelength (int or str)"""
         self.emptyCMDlist()
 
-        c = "/cli:python /app:matrix /sys:1 /cmd:adjustls /seq:" + str(seq) + " /exp:" + job
+        c = "/cli:python /app:matrix /sys:"+self.sysID+" /cmd:adjustls /seq:" + str(seq) + " /exp:" + job
         if int(wavelength) == 405:
             c += " /lsq:uv /lid:405"
         else:
