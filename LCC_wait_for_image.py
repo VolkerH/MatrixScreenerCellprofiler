@@ -383,7 +383,7 @@ class LCCwaitForImage(cpm.CPModule):
         # Lots of boilerplate code for the differnt channels - TODO make this neater with a loop
 
         tmppath, tmpfile= os.path.split(self.filech1)
-        output_image = cpi.Image(pixel_data, path_name=tmppath,file_name = tmpfile)
+        output_image = cpi.Image(pixel_data, path_name=tmppath,file_name = tmpfile, scale=255)
         image_set.add(self.output_image_name.value, output_image)
         workspace.measurements.add_measurement("Image","_".join((C_FILE_NAME,self.output_image_name.value)), tmpfile, can_overwrite=True)
         workspace.measurements.add_measurement("Image","_".join((C_PATH_NAME,self.output_image_name.value)), tmppath, can_overwrite=True)
