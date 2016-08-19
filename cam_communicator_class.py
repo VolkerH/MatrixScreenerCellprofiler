@@ -80,15 +80,6 @@ except:
     nolayoutmodule=True
 import re
 
-try:
-    import proprietary
-    noproprietary=False
-except:
-    noproprietary=True
-import re
-
-
-
 iplocal = "127.0.0.1"
 ipSP5A = "10.11.112.16" # these are convenient shorthands for internal use
 ipSP5B = "10.11.112.18" 
