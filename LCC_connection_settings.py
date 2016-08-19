@@ -64,7 +64,7 @@ class LCConnect(cpm.CPModule):
     ################# GUI Settings ########################
     def create_settings(self):
 
-        self.IP_address = cps.Text(IP_ADDRESS_TEXT, "10.11.112.16",
+        self.IP_address = cps.Text(IP_ADDRESS_TEXT, "127.0.0.1",
                                    metadata = False,
                                    doc="""
                                    IP address of the leica cam server""")
@@ -73,11 +73,14 @@ class LCConnect(cpm.CPModule):
                                  metadata = False,
                                  doc="""
                                  Basepath to images on the computer running cellprofiler. Use the path seperators for the operating system that Cellprofiler is running on.""")
+
+        self.sysID = cps.Integer("Leica /sys value (typically 0)", value = 0, minval = 0, doc = """some Matrix screener CAM commands require passing in a system identifier. On most microscopes I have seen this ID is zero, but in some rare cases you may have to use a value of 1 (or something else)""")
         
         
     def do_connect(self):
         print "Connecting"
         CAMC.setIP(self.IP_address.value)
+        CAMC.setSysID(self.sysID.value)
         CAMC.open()
 
     def do_disconnect(self):
@@ -90,7 +93,7 @@ class LCConnect(cpm.CPModule):
         print "Socket is", ("disconnected","connected")[CAMC.isConnected()]
 
     def settings(self):
-        return [ self.IP_address,  self.basepath] 
+        return [ self.IP_address,  self.basepath, self.sysID] 
     
     def visible_settings(self):
         return self.settings()
@@ -104,3 +107,4 @@ class LCConnect(cpm.CPModule):
         CAMC.basepath=self.basepath.value
         print "setting IP address ", self.IP_address.value
         CAMC.setIP(self.IP_address.value)
+        CAMC.setSysID(self.sysID.value)
