@@ -300,7 +300,7 @@ class LCCwaitForImage(cpm.CPModule):
             raise Exception("no metadata")
 
         # reassemble base name
-        base= md['prefix']+md['loop']+md['slide']+md['U']+md['V']+md['job']+md['E']+md['other']+md['X']+md['Y']+md['tpoint']+md['zpos']
+        base= md['prefix']+md['loop']+md['slide']+md['M']+md['U']+md['V']+md['job']+md['E']+md['other']+md['X']+md['Y']+md['tpoint']+md['zpos']
         
 
         
@@ -439,6 +439,7 @@ class LCCwaitForImage(cpm.CPModule):
         workspace.measurements.add_measurement("Image","Metadata_Job", np.array(int(md['job'][3:])), can_overwrite=True)
         workspace.measurements.add_measurement("Image","Metadata_Channel", np.array(int(md['channel'][3:])), can_overwrite=True)
         workspace.measurements.add_measurement("Image","Metadata_T", np.array(int(md['tpoint'][3:])), can_overwrite=True)
+        workspace.measurements.add_measurement("Image","Metadata_M", np.array(int(md['M'][3:])), can_overwrite=True)
         workspace.measurements.add_measurement("Image","Metadata_ChamberU", np.array(int(md['U'][3:])), can_overwrite=True)
         workspace.measurements.add_measurement("Image","Metadata_ChamberV", np.array(int(md['V'][3:])), can_overwrite=True)
         workspace.measurements.add_measurement("Image","Metadata_Loop", np.array(int(md['loop'][3:])), can_overwrite=True)

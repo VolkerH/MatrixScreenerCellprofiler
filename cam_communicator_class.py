@@ -245,7 +245,7 @@ class CAMcommunicator:
         metadata is a dict of metadata fields extracted from the filename (TODO- Test with CAM images)
         """
 
-        re_pattern = "(?P<Prefix>.*)(?P<Loop>--[Ll][0-9]*)(?P<Slide>--S[0-9]*)(?P<U>--[Uu][0-9]*)(?P<V>--[Vv][0-9]*)(?P<Job>--J[0-9]*)(?P<E>--[Ee].*)(?P<O>--O.*)(?P<X>--[Xx][0-9]*)(?P<Y>--[Yy][0-9]*)(?P<T>--[Tt][0-9]*)(?P<Zpos>--[Zz][0-9]*)(?P<Channel>--[Cc][0-9]*)(?P<Suffix>.*)(\.ome.tif$)"
+        re_pattern = "(?P<Prefix>.*)(?P<Loop>--[Ll][0-9]*)(?P<Slide>--S[0-9]*)(?P<M>--[Mm][0-9])(?P<U>--[Uu][0-9]*)(?P<V>--[Vv][0-9]*)(?P<Job>--J[0-9]*)(?P<E>--[Ee].*)(?P<O>--O.*)(?P<X>--[Xx][0-9]*)(?P<Y>--[Yy][0-9]*)(?P<T>--[Tt][0-9]*)(?P<Zpos>--[Zz][0-9]*)(?P<Channel>--[Cc][0-9]*)(?P<Suffix>.*)(\.ome.tif$)"
 
         try:
             starttime = time.time()
@@ -293,6 +293,7 @@ class CAMcommunicator:
                                     metadata['prefix'] = (re_m.group('Prefix'))
                                     metadata['loop'] = (re_m.group('Loop'))
                                     metadata['slide'] = (re_m.group('Slide'))
+                                    metadata['M'] = (re_m.group('M'))
                                     metadata['U'] = (re_m.group('U'))
                                     metadata['V'] = (re_m.group('V'))
                                     metadata['job'] = (re_m.group('Job'))
