@@ -217,8 +217,9 @@ class LCCwaitForImage(cpm.CPModule):
         return True
 
     def get_measurement_columns(self, pipeline):
-        # Publish the metadata fields here, so we can use them in export and
-        # 
+        # Publish the metadata fields here, so we can use them in export
+        # TODO: what to do with Metadata_M ? It is not always present, currently it is not published
+        # to the pipeline
         return [(cpmeas.IMAGE, "Metadata_image_width", cpmeas.COLTYPE_INTEGER),
                 (cpmeas.IMAGE, "Metadata_image_height", cpmeas.COLTYPE_INTEGER),
                 (cpmeas.IMAGE, "Metadata_PosX", cpmeas.COLTYPE_INTEGER),
@@ -301,9 +302,7 @@ class LCCwaitForImage(cpm.CPModule):
 
         # reassemble base name
         base= md['prefix']+md['loop']+md['slide']+md['M']+md['U']+md['V']+md['job']+md['E']+md['other']+md['X']+md['Y']+md['tpoint']+md['zpos']
-        
 
-        
         def read_stack(filename):
             slicedigits = len(md['zpos'][3:])
             lastslice=int(md['zpos'][3:])
