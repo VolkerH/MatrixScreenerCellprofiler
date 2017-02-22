@@ -246,6 +246,9 @@ class CAMcommunicator:
         """
 
         re_pattern = "(?P<Prefix>.*)(?P<Loop>--[Ll][0-9]*)(?P<Slide>--S[0-9]*)(?P<U>--[Uu][0-9]*)(?P<V>--[Vv][0-9]*)(?P<Job>--J[0-9]*)(?P<E>--[Ee].*)(?P<O>--O.*)(?P<X>--[Xx][0-9]*)(?P<Y>--[Yy][0-9]*)(?P<T>--[Tt][0-9]*)(?P<Zpos>--[Zz][0-9]*)(?P<Channel>--[Cc][0-9]*)(?P<Suffix>.*)(\.ome.tif$)"
+        # on some systems, the file name includes an additional --M field, in this case we need to use a different regular
+        # expressen
+        re_pattern_m = """(?P<Prefix>.*)(?P<Loop>--[Ll][0-9]*)(?P<Slide>--S[0-9]*)(?P<M>--[Mm][0-9]*)(?P<U>--[Uu][0-9]*)(?P<V>--[Vv][0-9]*)(?P<Job>--J[0-9]*)(?P<E>--[Ee].*)(?P<O>--O.*)(?P<X>--[Xx][0-9]*)(?P<Y>--[Yy][0-9]*)(?P<T>--[Tt][0-9]*)(?P<Zpos>--[Zz][0-9]*)(?P<Channel>--[Cc][0-9]*)(?P<Suffix>.*)\.ome.tif$"""
 
         try:
             starttime = time.time()
@@ -288,11 +291,23 @@ class CAMcommunicator:
                                 self.previous_file = fname # workaround as some files are reported twice
                                 print "New file " + fname
                                 # TODO: check whether filename contains the substring CAM and use different re pattern if necessary
-                                re_m = re.match(re_pattern, fname)
+                                if ("--m" in fname) or ("--M" in fname):
+                                    pattern = re_pattern_m
+                                    withM = True
+                                    print("filename contains --M")
+                                else:
+                                    pattern = re_pattern
+                                    withM = False
+                                    print("regular filename")
+                                re_m = re.match(pattern, fname)
                                 if re_m is not None:
                                     metadata['prefix'] = (re_m.group('Prefix'))
                                     metadata['loop'] = (re_m.group('Loop'))
                                     metadata['slide'] = (re_m.group('Slide'))
+                                    if withM:
+                                        metadata['M'] = (re_m.group('M'))
+                                    else:
+                                        metadata['M'] = '--M'
                                     metadata['U'] = (re_m.group('U'))
                                     metadata['V'] = (re_m.group('V'))
                                     metadata['job'] = (re_m.group('Job'))

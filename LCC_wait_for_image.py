@@ -217,8 +217,9 @@ class LCCwaitForImage(cpm.CPModule):
         return True
 
     def get_measurement_columns(self, pipeline):
-        # Publish the metadata fields here, so we can use them in export and
-        # 
+        # Publish the metadata fields here, so we can use them in export
+        # TODO: what to do with Metadata_M ? It is not always present, currently it is not published
+        # to the pipeline
         return [(cpmeas.IMAGE, "Metadata_image_width", cpmeas.COLTYPE_INTEGER),
                 (cpmeas.IMAGE, "Metadata_image_height", cpmeas.COLTYPE_INTEGER),
                 (cpmeas.IMAGE, "Metadata_PosX", cpmeas.COLTYPE_INTEGER),
@@ -300,10 +301,8 @@ class LCCwaitForImage(cpm.CPModule):
             raise Exception("no metadata")
 
         # reassemble base name
-        base= md['prefix']+md['loop']+md['slide']+md['U']+md['V']+md['job']+md['E']+md['other']+md['X']+md['Y']+md['tpoint']+md['zpos']
-        
+        base= md['prefix']+md['loop']+md['slide']+md['M']+md['U']+md['V']+md['job']+md['E']+md['other']+md['X']+md['Y']+md['tpoint']+md['zpos']
 
-        
         def read_stack(filename):
             slicedigits = len(md['zpos'][3:])
             lastslice=int(md['zpos'][3:])
@@ -439,6 +438,7 @@ class LCCwaitForImage(cpm.CPModule):
         workspace.measurements.add_measurement("Image","Metadata_Job", np.array(int(md['job'][3:])), can_overwrite=True)
         workspace.measurements.add_measurement("Image","Metadata_Channel", np.array(int(md['channel'][3:])), can_overwrite=True)
         workspace.measurements.add_measurement("Image","Metadata_T", np.array(int(md['tpoint'][3:])), can_overwrite=True)
+        workspace.measurements.add_measurement("Image","Metadata_M", np.array(int(md['M'][3:])), can_overwrite=True)
         workspace.measurements.add_measurement("Image","Metadata_ChamberU", np.array(int(md['U'][3:])), can_overwrite=True)
         workspace.measurements.add_measurement("Image","Metadata_ChamberV", np.array(int(md['V'][3:])), can_overwrite=True)
         workspace.measurements.add_measurement("Image","Metadata_Loop", np.array(int(md['loop'][3:])), can_overwrite=True)
