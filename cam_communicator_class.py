@@ -307,7 +307,7 @@ class CAMcommunicator:
                                     if withM:
                                         metadata['M'] = (re_m.group('M'))
                                     else:
-                                        metadata['M'] = '--M'
+                                        metadata['M'] = ''
                                     metadata['U'] = (re_m.group('U'))
                                     metadata['V'] = (re_m.group('V'))
                                     metadata['job'] = (re_m.group('Job'))
